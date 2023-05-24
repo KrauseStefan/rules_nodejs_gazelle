@@ -164,6 +164,13 @@ func (lang *JS) Resolve(c *config.Config, ix *resolve.RuleIndex, rc *repo.Remote
 	dataSet := make(map[string]bool)
 	for name := range imports.set {
 
+		match := jsConfig.ImportAliasPattern.FindStringSubmatch(name)
+		if len(match) > 0 {
+			prefix := match[0]
+			alias := jsConfig.ImportAliases[prefix]
+			name = alias + strings.TrimPrefix(name, prefix)
+		}
+
 		// is it a package.json import?
 		if name == "package" || name == "package.json" {
 			depSet[packageJSON] = true
@@ -208,13 +215,6 @@ func (lang *JS) Resolve(c *config.Config, ix *resolve.RuleIndex, rc *repo.Remote
 			dep := lbl.Rel(from.Repo, from.Pkg).String()
 			depSet[dep] = true
 			continue
-		}
-		// fix aliases
-		match := jsConfig.ImportAliasPattern.FindStringSubmatch(name)
-		if len(match) > 0 {
-			prefix := match[0]
-			alias := jsConfig.ImportAliases[prefix]
-			name = alias + strings.TrimPrefix(name, prefix)
 		}
 
 		lang.resolveWalkParents(name, depSet, dataSet, c, ix, rc, r, from)

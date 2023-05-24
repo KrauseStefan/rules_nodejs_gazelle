@@ -112,5 +112,6 @@ go_test(
         "jest_mock",
         "dynamic_import",
         "import_alias",
+        "import_alias_with_@",
     ]
 ]
