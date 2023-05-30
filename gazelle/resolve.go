@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 
 	"github.com/bazelbuild/bazel-gazelle/config"
@@ -84,19 +85,18 @@ var BUILTINS = map[string]bool{
 // If nil is returned, the rule will not be indexed. If any non-nil slice is
 // returned, including an empty slice, the rule will be indexed.
 func (lang *JS) Imports(c *config.Config, r *rule.Rule, f *rule.File) []resolve.ImportSpec {
-
-	srcs := r.AttrStrings("srcs")
+	srcsSet := lang.getSrcsSet(r)
 
 	isModule := false
 	// look for index.js and mark this rule as a module rule
-	for _, src := range srcs {
+	for src, _ := range srcsSet {
 		if isModuleFile(src) {
 			isModule = true
 			break
 		}
 	}
 
-	n := len(srcs)
+	n := len(srcsSet)
 	if isModule {
 		n += 1
 	}
@@ -104,12 +104,12 @@ func (lang *JS) Imports(c *config.Config, r *rule.Rule, f *rule.File) []resolve.
 	importSpecs := make([]resolve.ImportSpec, n)
 
 	// index each source file
-	for i, src := range srcs {
+	for src, _ := range srcsSet {
 		filePath := path.Join(f.Pkg, src)
-		importSpecs[i] = resolve.ImportSpec{
+		importSpecs = append(importSpecs, resolve.ImportSpec{
 			Lang: lang.Name(),
 			Imp:  filePath,
-		}
+		})
 	}
 
 	// modules can be resolved via the directory containing them
@@ -121,6 +121,22 @@ func (lang *JS) Imports(c *config.Config, r *rule.Rule, f *rule.File) []resolve.
 	}
 
 	return importSpecs
+}
+
+func (lang *JS) getSrcsSet(rule *rule.Rule) map[string]bool {
+	srcsAttr := rule.PrivateAttr("srcs")
+	if srcsAttr == nil {
+		return make(map[string]bool, 0)
+	}
+
+	privateSrcs := reflect.ValueOf(srcsAttr)
+
+	srcs := make(map[string]bool, privateSrcs.Len())
+	for i := 0; i < privateSrcs.Len(); i++ {
+		srcs[privateSrcs.Index(i).String()] = true
+	}
+
+	return srcs
 }
 
 // Embeds returns a list of labels of rules that the given rule embeds. If

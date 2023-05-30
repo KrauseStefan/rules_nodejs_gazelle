@@ -326,6 +326,11 @@ func (lang *JS) GenerateRules(args language.GenerateArgs) language.GenerateResul
 		}
 	}
 
+	for _, rule := range generatedRules {
+		srcs := rule.AttrStrings("srcs")
+		rule.SetPrivateAttr("srcs", srcs)
+	}
+
 	return language.GenerateResult{
 		Gen:     generatedRules,
 		Empty:   []*rule.Rule{},
