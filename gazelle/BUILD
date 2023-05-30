@@ -42,8 +42,6 @@ go_library(
 )
 
 TEST_DEPS = [
-    "@bazel_gazelle//label:go_default_library",
-    "@bazel_gazelle//resolve:go_default_library",
     "@bazel_gazelle//testtools:go_default_library",
     "@com_github_emirpasic_gods//lists/singlylinkedlist",
     "@com_github_ghodss_yaml//:yaml",
