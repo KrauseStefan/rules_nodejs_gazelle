@@ -1,0 +1,5 @@
+load("//bazel/tools:index.bzl", "angular_module")
+
+# gazelle:js_root
+
+angular_module(deps = ["//module"])

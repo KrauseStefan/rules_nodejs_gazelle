@@ -1,0 +1,10 @@
+load("//bazel/tools:index.bzl", "angular_module")
+
+# gazelle:js_root
+# gazelle:map_kind ts_project angular_module //bazel/tools:index.bzl
+
+angular_module(
+    name = "a",
+    srcs = ["a.ts"],
+    deps = ["//module:b"],
+)

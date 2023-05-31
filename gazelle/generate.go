@@ -42,10 +42,17 @@ var localRules = rule.LoadInfo{
 	Name:    "@com_github_benchsci_rules_nodejs_gazelle//:defs.bzl",
 	Symbols: []string{"web_asset", "web_assets", "js_library", "ts_definition"},
 }
+
+// var tsRules = rule.LoadInfo{
+// 	Name:    "@npm//@bazel/typescript:index.bzl",
+// 	Symbols: []string{"ts_project"},
+// }
+
 var tsRules = rule.LoadInfo{
-	Name:    "@npm//@bazel/typescript:index.bzl",
-	Symbols: []string{"ts_project"},
+	Name:    "//bazel/tools:index.bzl",
+	Symbols: []string{"angular_module"},
 }
+
 var jestRules = rule.LoadInfo{
 	Name:    "@npm//jest:index.bzl",
 	Symbols: []string{"jest_test"},
@@ -195,7 +202,7 @@ func (lang *JS) GenerateRules(args language.GenerateArgs) language.GenerateResul
 		log.Print(Warn("[WARN] ts and js files mixed in module %s", pkgName))
 	}
 
-	aggregateModule := jsConfig.AggregateModules && isModule && !isJSRoot
+	aggregateModule := true // jsConfig.AggregateModules && isModule && !isJSRoot
 
 	// add "ts_project" rule(s)
 	genRules := func(kindSources []string, kindImports []imports, appendTS bool, kind string) {
@@ -213,9 +220,9 @@ func (lang *JS) GenerateRules(args language.GenerateArgs) language.GenerateResul
 					srcs:     kindSources,
 					imports:  kindImports,
 				}, jsConfig)
-				if !jsConfig.Quiet && len(moduleRules) > 1 {
-					log.Print(Warn("[WARN] disjoint module %s", args.Rel))
-				}
+				// if !jsConfig.Quiet && len(moduleRules) > 1 {
+				// 	log.Print(Warn("[WARN] disjoint module %s", args.Rel))
+				// }
 				for i := range moduleRules {
 					generatedRules = append(generatedRules, moduleRules[i])
 					generatedImports = append(generatedImports, moduleImports[i])
@@ -232,11 +239,19 @@ func (lang *JS) GenerateRules(args language.GenerateArgs) language.GenerateResul
 					generatedImports = append(generatedImports, &kindImports[i])
 				}
 			}
+			// fmt.Println("genRules kind: " + kind)
+			// fmt.Println("genRules name: " + name)
+
+			// for i := range kindImports {
+			// 	for k := range kindImports[i].set {
+			// 		fmt.Println("kindImports: " + k)
+			// 	}
+			// }
 		}
 	}
 
 	// add ts_project rules
-	genRules(tsSources, tsImports, len(jsSources) > 0, "ts_project")
+	genRules(tsSources, tsImports, len(jsSources) > 0, "angular_module")
 	// add js_library rules
 	genRules(jsSources, jsImports, false, "js_library")
 
@@ -329,6 +344,7 @@ func (lang *JS) GenerateRules(args language.GenerateArgs) language.GenerateResul
 	for _, rule := range generatedRules {
 		srcs := rule.AttrStrings("srcs")
 		rule.SetPrivateAttr("srcs", srcs)
+		rule.DelAttr("srcs")
 	}
 
 	return language.GenerateResult{
@@ -399,18 +415,9 @@ func (lang *JS) makeModuleRules(args moduleRuleArgs, jsConfig *JsConfig) ([]*imp
 
 	// identify the "index.js|ts" src file and include it in moduleSet
 	// all other source files start in remainderSet
-	indexKey := ""
 	moduleSet := make(map[string]imports)
 	remainderSet := make(map[string]imports)
 
-	for i, src := range args.srcs {
-		if isModuleFile(src) {
-			moduleSet[src] = args.imports[i]
-			indexKey = src
-		} else {
-			remainderSet[src] = args.imports[i]
-		}
-	}
 
 	// recurse through each import for src file
 	// which, if it's local, transitively belongs in the moduleSet
@@ -437,7 +444,10 @@ func (lang *JS) makeModuleRules(args moduleRuleArgs, jsConfig *JsConfig) ([]*imp
 	}
 
 	// start with index and recurse through imports
-	recAddTransitiveSet(indexKey)
+	for i, src := range args.srcs {
+		moduleSet[src] = args.imports[i]
+		recAddTransitiveSet(src)
+	}
 
 	// Accumulate Modules sources and imports into lists
 	moduleSrcs := make([]string, 0)
@@ -454,7 +464,6 @@ func (lang *JS) makeModuleRules(args moduleRuleArgs, jsConfig *JsConfig) ([]*imp
 	if len(jsConfig.Visibility.Labels) > 0 {
 		moduleRule.SetAttr("visibility", jsConfig.Visibility.Labels)
 	}
-	moduleRule.SetAttr("tags", []string{"js_module"})
 
 	// Accumulate remainder srcs and imports into lists
 	remainderSrcs := make([]string, 0)

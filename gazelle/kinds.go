@@ -39,7 +39,7 @@ func (*JS) Kinds() map[string]rule.KindInfo {
 				"data": true,
 			},
 		},
-		"ts_project": {
+		"angular_module": {
 			MatchAny: false,
 			NonEmptyAttrs: map[string]bool{
 				"srcs": true,

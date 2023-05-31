@@ -1,0 +1,2 @@
+# gazelle:js_root
+# gazelle:map_kind ts_project angular_module //bazel/tools:index.bzl

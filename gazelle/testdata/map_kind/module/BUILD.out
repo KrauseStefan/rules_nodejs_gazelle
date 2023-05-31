@@ -1,0 +1,6 @@
+load("//bazel/tools:index.bzl", "angular_module")
+
+angular_module(
+    name = "b",
+    srcs = ["b.ts"],
+)

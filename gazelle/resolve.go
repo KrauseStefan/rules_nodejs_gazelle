@@ -202,7 +202,7 @@ func (lang *JS) Resolve(c *config.Config, ix *resolve.RuleIndex, rc *repo.Remote
 			}
 			depSet[jsConfig.NpmLabel+name] = true
 
-			if jsConfig.LookupTypes && r.Kind() == "ts_project" {
+			if jsConfig.LookupTypes && r.Kind() == "angular_module" {
 				// does it have a corresponding @types/[...] declaration?
 				if lang.isNpmDependency("@types/"+name, jsConfig) {
 					depSet[jsConfig.NpmLabel+"@types/"+name] = true
@@ -215,7 +215,7 @@ func (lang *JS) Resolve(c *config.Config, ix *resolve.RuleIndex, rc *repo.Remote
 		// is it a builtin?
 		if _, ok := BUILTINS[name]; ok {
 			// add @types/node when using node.js builtin and have @types/nodes installed
-			if jsConfig.LookupTypes && r.Kind() == "ts_project" {
+			if jsConfig.LookupTypes && r.Kind() == "angular_module" {
 				if lang.isNpmDependency("@types/node", jsConfig) {
 					depSet[jsConfig.NpmLabel+"@types/node"] = true
 				}
